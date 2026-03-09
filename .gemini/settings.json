@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agent-hub": {
+      "url": "http://localhost:8080/sse"
+    }
+  },
+  "hooks": {
+    "Notification": [
+      "if (event.type === 'resourceListChanged') { console.log('\\n[Hook] BBS activity detected, peeking...'); gemini-cli call agent-hub:check_hub_status; }"
+    ]
+  }
+}

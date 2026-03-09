@@ -1,0 +1,110 @@
+version: '3'
+
+vars:
+  PROJECT_NAME: gist-hub-mcp
+  BIN_DIR: bin
+
+tasks:
+  default:
+    cmds:
+      - task: build
+    desc: Build all binaries
+
+  build:
+    desc: Build all binaries (agent-hub, dashboard, client)
+    cmds:
+      - task: build:agent-hub
+      - task: build:dashboard
+      - task: build:client
+
+  build:agent-hub:
+    desc: Build agent-hub binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/agent-hub ./cmd/agent-hub
+
+  build:dashboard:
+    desc: Build dashboard binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/dashboard ./cmd/dashboard
+
+  build:client:
+    desc: Build client binary
+    cmds:
+      - go build -o {{.BIN_DIR}}/client ./cmd/client
+
+  run:
+    desc: Run agent-hub server (stdio mode)
+    cmds:
+      - ./bin/agent-hub serve
+    env:
+      BBS_AGENT_ID: '{{.BBS_AGENT_ID | default "dev-human"}}'
+
+  setup:mcp:
+    desc: Start agent-hub MCP server (SSE mode) on port 8080
+    cmds:
+      - ./bin/agent-hub serve -sse :8080
+
+  run:orchestrator:
+    desc: Run agent-hub orchestrator
+    cmds:
+      - ./bin/agent-hub orchestrator
+
+  run:dashboard:
+    desc: Run TUI dashboard
+    cmds:
+      - ./bin/dashboard
+
+  setup:
+    desc: Run initial setup
+    cmds:
+      - ./bin/agent-hub setup
+
+  setup:beads:
+    desc: Initialize beads-rust and configure .gitignore
+    cmds:
+      - br init
+      - grep -q ".beads/" .gitignore || (echo ".beads/" >> .gitignore && echo "Added .beads/ to .gitignore")
+
+  doctor:
+    desc: Run system diagnostics
+    cmds:
+      - ./bin/agent-hub doctor
+
+  test:
+    desc: Run all Go tests
+    cmds:
+      - go test -v ./...
+
+  test:race:
+    desc: Run tests with race detector
+    cmds:
+      - go test -v -race ./...
+
+  test:cover:
+    desc: Run tests with coverage report
+    cmds:
+      - go test -v -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+
+  fmt:
+    desc: Format Go code using goimports
+    cmds:
+      - goimports -w .
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run --fix
+
+  clean:
+    desc: Clean build artifacts from bin/ and root
+    cmds:
+      - rm -rf {{.BIN_DIR}}/
+      - rm -f agent-hub dashboard client
+      - rm -f coverage.out coverage.html
+
+  ci:test:
+    desc: Run full test suite (for CI)
+    cmds:
+      - task: test:race
+      - task: test:cover
