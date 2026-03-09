@@ -60,15 +60,15 @@ func TestScanDirectoryWithSubdirectory(t *testing.T) {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
-	// Create subdirectory (should be skipped)
-	subDir := filepath.Join(tmpDir, "skip_me")
+	// Create subdirectory (should now be included)
+	subDir := filepath.Join(tmpDir, "report")
 	if err := os.Mkdir(subDir, 0755); err != nil {
 		t.Fatalf("Failed to create subdirectory: %v", err)
 	}
 
 	// Create file in subdirectory
-	testFile2 := filepath.Join(subDir, "sub.txt")
-	if err := os.WriteFile(testFile2, []byte("sub content"), 0644); err != nil {
+	testFile2 := filepath.Join(subDir, "2026-03-09.md")
+	if err := os.WriteFile(testFile2, []byte("report content"), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
@@ -78,19 +78,25 @@ func TestScanDirectoryWithSubdirectory(t *testing.T) {
 		t.Fatalf("scanDirectory() error = %v", err)
 	}
 
-	// Verify only root files are included
-	if len(files) != 1 {
-		t.Errorf("Expected 1 file (root only), got %d", len(files))
+	// Verify both files are included with hierarchy
+	if len(files) != 2 {
+		t.Errorf("Expected 2 files (root + subdirectory), got %d", len(files))
 	}
 
 	if _, ok := files["root.txt"]; !ok {
 		t.Error("Expected root.txt to be in files")
 	}
 
-	if _, ok := files["skip_me/sub.txt"]; ok {
-		t.Error("Expected subdirectory file to be skipped")
+	if _, ok := files["report/2026-03-09.md"]; !ok {
+		t.Error("Expected report/2026-03-09.md to be in files")
+	}
+
+	// Verify content
+	if files["report/2026-03-09.md"].Content != "report content" {
+		t.Errorf("Expected content 'report content', got '%s'", files["report/2026-03-09.md"].Content)
 	}
 }
+
 
 func TestScanDirectoryEmpty(t *testing.T) {
 	// Create empty directory

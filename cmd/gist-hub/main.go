@@ -183,17 +183,12 @@ func editGist(gistID, dirPath string) {
 	fmt.Printf("ID: %s\n", updated.ID)
 	fmt.Printf("URL: %s\n", updated.HTMLURL)
 }
-
 func scanDirectory(dirPath string) (map[string]github.GistFile, error) {
 	files := make(map[string]github.GistFile)
 
 	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
-		}
-
-		if info.IsDir() && path != dirPath {
-			return filepath.SkipDir
 		}
 
 		if !info.IsDir() {
@@ -207,7 +202,14 @@ func scanDirectory(dirPath string) (map[string]github.GistFile, error) {
 				return fmt.Errorf("failed to get relative path: %w", err)
 			}
 
-			files[relPath] = github.GistFile{
+			// Ensure forward slashes for Gist path compatibility
+			relPath = filepath.ToSlash(relPath)
+
+			// Replace slashes with dashes for GitHub API compatibility
+			// GitHub API rejects filenames with slashes
+			fileName := strings.ReplaceAll(relPath, "/", "-")
+
+			files[fileName] = github.GistFile{
 				Content: string(content),
 			}
 		}
@@ -217,7 +219,6 @@ func scanDirectory(dirPath string) (map[string]github.GistFile, error) {
 
 	return files, err
 }
-
 func printUsage() {
 	fmt.Println("gist-hub - GitHub Gist CLI with gist-hub prefix support")
 	fmt.Println()
