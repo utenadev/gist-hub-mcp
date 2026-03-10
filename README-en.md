@@ -6,23 +6,32 @@
 
 ## Features
 
-- **Universal Library**: Use GitHub Gist as a persistent knowledge base.
-- **Wiki Mode**: Compatible with VSCode GistPad, supporting hierarchical structures using `_index.md` and `_category.json`.
-- **SQLite Cache**: Avoid API rate limits and achieve fast full-text search.
-- **MCP Compliant**: Provide Gist knowledge to any AI agent via the Model Context Protocol (MCP).
-- **BBS Integration**: Integrate with `agent-hub` to notify knowledge updates in real-time.
+- **Transparent Encryption**: Supports transparent encryption using AES-256-GCM.
+- **GistPad Compatibility**: Supports hierarchical structures using the backslash (`\`) separator, fully compatible with VSCode GistPad.
+- **SQLite Indexing**: Local cache for fast search and metadata management.
+- **Multi-Platform**: Integration between Go CLI (MCP enabled) and PWA (Vite + Web Crypto API).
+- **BBS Integration**: Automates knowledge sharing between agents via `agent-hub`.
 
 ## Usage (CLI)
 
-Currently in Phase 1 of development. It uses GitHub CLI (`gh`) authentication.
+Uses GitHub CLI (`gh`) authentication.
 
 ```bash
 # List Gists (Filtered by gist-hub: prefix)
 gist-hub list
 
-# Get a specific Gist
-gist-hub get <gist_id>
+# Create an encrypted Gist
+gist-hub create <dir> --passphrase "your-password"
+
+# Fetch and decrypt a Gist
+gist-hub get <id> --passphrase "your-password"
 ```
+
+## Development Status
+
+- **Phase 1 & 2**: CLI Foundation, GitHub Integration, Cobra Refactoring (Completed ✅)
+- **Phase 3**: SQLite Cache, Encryption Logic Integration (In Progress 🏗️)
+- **Phase 4**: Wiki Mode (Automatic Index Resolution), MCP Server (Planned)
 
 ## License
 
