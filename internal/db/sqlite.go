@@ -27,9 +27,16 @@ func NewSQLiteRepository(dsn string) (*SQLiteRepository, error) {
 
 // Init initializes the database schema
 func (r *SQLiteRepository) Init(ctx context.Context) error {
-	_, err := r.db.ExecContext(ctx, GetSchema())
+	// Enable foreign key constraints
+	_, err := r.db.ExecContext(ctx, "PRAGMA foreign_keys = ON")
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.ExecContext(ctx, GetSchema())
 	return err
 }
+
 
 // SaveGist stores a new gist or updates an existing one
 func (r *SQLiteRepository) SaveGist(ctx context.Context, gist *Gist, files []*File) error {
