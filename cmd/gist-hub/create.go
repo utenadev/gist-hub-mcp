@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/yklcs/gist-hub-mcp/internal/crypto"
 	"github.com/yklcs/gist-hub-mcp/internal/github"
 )
 
@@ -57,6 +58,10 @@ func createGist(dirPath string) {
 	fmt.Fprintf(os.Stdout, "✓ Gist created successfully!\n")
 	fmt.Fprintf(os.Stdout, "ID: %s\n", created.ID)
 	fmt.Fprintf(os.Stdout, "URL: %s\n", created.HTMLURL)
+
+	if IsEncryptionEnabled() {
+		fmt.Fprintf(os.Stdout, "Note: Encrypted with passphrase\n")
+	}
 }
 
 func scanDirectory(dirPath string) (map[string]github.GistFile, error) {
@@ -71,6 +76,15 @@ func scanDirectory(dirPath string) (map[string]github.GistFile, error) {
 			content, err := os.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("failed to read file %s: %w", path, err)
+			}
+
+			// Encrypt content if passphrase is provided
+			if IsEncryptionEnabled() {
+				encrypted, err := crypto.Encrypt(content, GetPassphrase())
+				if err != nil {
+					return fmt.Errorf("failed to encrypt file %s: %w", path, err)
+				}
+				content = []byte(encrypted)
 			}
 
 			relPath, err := filepath.Rel(dirPath, path)

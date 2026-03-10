@@ -50,4 +50,8 @@ func editGist(gistID, dirPath string) {
 	fmt.Fprintf(os.Stdout, "✓ Gist updated successfully!\n")
 	fmt.Fprintf(os.Stdout, "ID: %s\n", updated.ID)
 	fmt.Fprintf(os.Stdout, "URL: %s\n", updated.HTMLURL)
+
+	if IsEncryptionEnabled() {
+		fmt.Fprintf(os.Stdout, "Note: Encrypted with passphrase\n")
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/yklcs/gist-hub-mcp/internal/crypto"
 )
 
 var getCmd = &cobra.Command{
@@ -40,9 +41,24 @@ func getGist(gistID string) {
 	fmt.Fprintf(os.Stdout, "Files:\n")
 
 	for filename, file := range gist.Files {
+		content := file.Content
+
+		// Decrypt content if passphrase is provided
+		if IsEncryptionEnabled() {
+			decrypted, err := crypto.Decrypt(content, GetPassphrase())
+			if err != nil {
+				fmt.Fprintf(os.Stdout, "\n--- %s ---\n", filename)
+				fmt.Fprintf(os.Stdout, "Language: %s\n", file.Language)
+				fmt.Fprintf(os.Stdout, "Size: %d bytes\n", file.Size)
+				fmt.Fprintf(os.Stdout, "Content: [ERROR: Decryption failed - invalid passphrase or corrupted data]\n")
+				continue
+			}
+			content = string(decrypted)
+		}
+
 		fmt.Fprintf(os.Stdout, "\n--- %s ---\n", filename)
 		fmt.Fprintf(os.Stdout, "Language: %s\n", file.Language)
 		fmt.Fprintf(os.Stdout, "Size: %d bytes\n", file.Size)
-		fmt.Fprintf(os.Stdout, "Content:\n%s\n", file.Content)
+		fmt.Fprintf(os.Stdout, "Content:\n%s\n", content)
 	}
 }

@@ -13,9 +13,9 @@ const (
 )
 
 var (
-	client *github.Client
+	client     *github.Client
+	passphrase string
 )
-
 var rootCmd = &cobra.Command{
 	Use:     "gist-hub",
 	Short:   "GitHub Gist CLI with gist-hub prefix support",
@@ -37,8 +37,22 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+func init() {
+	rootCmd.PersistentFlags().StringVarP(&passphrase, "passphrase", "p", "", "Passphrase for encryption/decryption")
+}
+
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+// GetPassphrase returns the configured passphrase (if encryption is enabled)
+func GetPassphrase() string {
+	return passphrase
+}
+
+// IsEncryptionEnabled returns true if a passphrase is configured
+func IsEncryptionEnabled() bool {
+	return passphrase != ""
 }
