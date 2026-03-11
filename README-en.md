@@ -10,7 +10,7 @@
 - **GistPad Compatibility**: Supports hierarchical structures using the backslash (`\`) separator, fully compatible with VSCode GistPad.
 - **SQLite Indexing**: Local cache for fast search and metadata management.
 - **Multi-Platform**: Integration between Go CLI (MCP enabled) and PWA (Vite + Web Crypto API).
-- **BBS Integration**: Automates knowledge sharing between agents via `agent-hub`.
+- **CI/CD Pipeline**: Automated testing via GitHub Actions and multi-platform distribution via GoReleaser.
 
 ## Usage (CLI)
 
@@ -30,8 +30,8 @@ gist-hub get <id> --passphrase "your-password"
 ## Development Status
 
 - **Phase 1 & 2**: CLI Foundation, GitHub Integration, Cobra Refactoring (Completed ✅)
-- **Phase 3**: SQLite Cache, Encryption Logic Integration (In Progress 🏗️)
-- **Phase 4**: Wiki Mode (Automatic Index Resolution), MCP Server (Planned)
+- **Phase 3**: SQLite Cache, AES-256-GCM Encryption Integration (Completed ✅)
+- **Phase 4**: Wiki Mode (Automatic Index Resolution), MCP Server (In Progress 🏗️)
 
 ## License
 
