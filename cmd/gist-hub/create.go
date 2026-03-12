@@ -12,9 +12,9 @@ import (
 )
 
 var createCmd = &cobra.Command{
-	Use:   "create <dir>",
-	Short: "Create a new gist from directory",
-	Long:  `Create a new GitHub Gist from files in the specified directory.`,
+	Use:   "create <path>",
+	Short: "Create a new gist from directory or file",
+	Long:  `Create a new GitHub Gist from files in the specified directory or a single file.`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		createGist(args[0])
@@ -25,21 +25,51 @@ func init() {
 	rootCmd.AddCommand(createCmd)
 }
 
-func createGist(dirPath string) {
-	absPath, err := filepath.Abs(dirPath)
+func createGist(targetPath string) {
+	absPath, err := filepath.Abs(targetPath)
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "Error: Failed to get absolute path: %v\n", err)
 		return
 	}
 
-	files, err := scanDirectory(absPath)
+	info, err := os.Stat(absPath)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "Error: Failed to scan directory: %v\n", err)
+		fmt.Fprintf(os.Stdout, "Error: Failed to stat target: %v\n", err)
 		return
 	}
 
+	files := make(map[string]github.GistFile)
+
+	if info.IsDir() {
+		files, err = scanDirectory(absPath)
+		if err != nil {
+			fmt.Fprintf(os.Stdout, "Error: Failed to scan directory: %v\n", err)
+			return
+		}
+	} else {
+		// Single file mode
+		content, err := os.ReadFile(absPath)
+		if err != nil {
+			fmt.Fprintf(os.Stdout, "Error: Failed to read file: %v\n", err)
+			return
+		}
+
+		if IsEncryptionEnabled() {
+			encrypted, err := crypto.Encrypt(content, GetPassphrase())
+			if err != nil {
+				fmt.Fprintf(os.Stdout, "Error: Failed to encrypt file: %v\n", err)
+				return
+			}
+			content = []byte(encrypted)
+		}
+
+		files[filepath.Base(absPath)] = github.GistFile{
+			Content: string(content),
+		}
+	}
+
 	if len(files) == 0 {
-		fmt.Fprintf(os.Stdout, "Error: No files found in directory\n")
+		fmt.Fprintf(os.Stdout, "Error: No files found to upload\n")
 		return
 	}
 
@@ -78,7 +108,6 @@ func scanDirectory(dirPath string) (map[string]github.GistFile, error) {
 				return fmt.Errorf("failed to read file %s: %w", path, err)
 			}
 
-			// Encrypt content if passphrase is provided
 			if IsEncryptionEnabled() {
 				encrypted, err := crypto.Encrypt(content, GetPassphrase())
 				if err != nil {
@@ -95,9 +124,11 @@ func scanDirectory(dirPath string) (map[string]github.GistFile, error) {
 			// Ensure forward slashes for Gist path compatibility
 			relPath = filepath.ToSlash(relPath)
 
-			// Convert forward slashes to backslashes for GistPad compatibility
-			// GistPad interprets backslashes as directory separators
+			// GistPad uses backslashes for directory separators.
+			// However, some API environments might reject it in initial creation.
+			// Let's stick to the user's "backslash" requirement but ensure it's sanitized.
 			fileName := strings.ReplaceAll(relPath, "/", "\\")
+			
 			files[fileName] = github.GistFile{
 				Content: string(content),
 			}
